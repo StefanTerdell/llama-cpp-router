@@ -1,7 +1,9 @@
 use anyhow::*;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, fs::canonicalize, path::Path};
+use std::{fs::canonicalize, path::Path};
+
+use crate::models::Quantization;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
 pub enum LlamaCppServerType {
@@ -12,26 +14,10 @@ pub enum LlamaCppServerType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
 pub enum LlamaCppServerQuant {
-    #[serde(rename = "Q4_K_M")]
-    Q4KM,
-    #[serde(rename = "Q6_K")]
-    Q6K,
-    #[serde(rename = "Q8_0")]
-    Q80,
-    #[serde(untagged)]
+    Quantization(Quantization),
     Other(String),
-}
-
-impl Display for LlamaCppServerQuant {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            LlamaCppServerQuant::Q4KM => "Q4_K_M",
-            LlamaCppServerQuant::Q6K => "Q6_K",
-            LlamaCppServerQuant::Q80 => "Q8_0",
-            LlamaCppServerQuant::Other(value) => value.as_str(),
-        })
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

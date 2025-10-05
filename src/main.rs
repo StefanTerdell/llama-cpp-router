@@ -1,6 +1,7 @@
 mod api;
 mod cli;
 mod config;
+mod models;
 
 use anyhow::*;
 use api::serve;
