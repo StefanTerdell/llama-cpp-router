@@ -1,6 +1,7 @@
 mod api;
 mod cli;
 mod config;
+mod estimate_gguf_size;
 mod models;
 
 use anyhow::*;
