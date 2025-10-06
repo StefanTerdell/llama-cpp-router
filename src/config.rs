@@ -16,7 +16,7 @@ pub enum LlamaCppServerType {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(untagged)]
 pub enum LlamaCppServerQuant {
-    Quantization(Quantization),
+    Known(Quantization),
     Other(String),
 }
 
