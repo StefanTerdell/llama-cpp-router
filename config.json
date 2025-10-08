@@ -1,0 +1,51 @@
+{
+  "$schema": "./schema.json",
+  "models": [
+    {
+      "type": "llama-cpp",
+      "config": {
+        "alias": "chat",
+        "hf-repo": "ReadyArt/Safeword-Casual-V1-R1-12B-GGUF:Q6_K",
+        "port": 3101,
+        "ctx-size": 64000,
+        "gpu-layers": 99
+      }
+    },
+    {
+      "type": "llama-cpp",
+      "config": {
+        "alias": "chat",
+        "hf-repo": "TheDrummer/Gemma-3-R1-12B-v1-GGUF:Q6_K",
+        "port": 3101,
+        "ctx-size": 64000,
+        "gpu-layers": 99
+      }
+    },
+    {
+      "type": "llama-cpp",
+      "config": {
+        "alias": "embedding",
+        "hf-repo": "Qwen/Qwen3-Embedding-4B-GGUF:Q6_K",
+        "port": 3102,
+        "embedding": true,
+        "pooling": "none",
+        "ctx-size": 0,
+        "parallel": 4,
+        "gpu-layers": 99
+      }
+    },
+    {
+      "type": "llama-cpp",
+      "config": {
+        "alias": "reranking",
+        "hf-repo": "mradermacher/Qwen3-Reranker-4B-GGUF:Q6_K",
+        "port": 3103,
+        "reranking": true,
+        "ctx-size": 0,
+        "parallel": 4,
+        "gpu-layers": 99
+      }
+    }
+  ],
+  "port": 3100
+}

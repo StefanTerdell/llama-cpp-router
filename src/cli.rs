@@ -12,12 +12,54 @@ pub struct Cli {
 pub enum CliCommand {
     Schema,
     Serve {
-        #[clap(
-            long,
-            short,
-            default_value = "$HOME/.config/llama-cpp-router/config.json"
-        )]
-        config_file: PathBuf,
+        #[clap(long, short, default_value = "./config.json")]
+        config_path: PathBuf,
+        #[clap(long, short, action)]
+        detach: bool,
+        #[clap(long, short, default_value_t = 3100)]
+        port: u16,
+    },
+    Models {
+        #[clap(long, short, default_value = "./config.json")]
+        config_path: PathBuf,
+        #[clap(subcommand)]
+        command: Option<ModelCommand>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ModelCommand {
+    List,
+    Config {
+        alias_or_index: Option<String>,
+    },
+    Load {
+        #[clap(long, short, default_value_t = 3100)]
+        port: u16,
+        #[clap(long, short, action)]
+        tail: bool,
+        #[clap(long, short, action)]
+        json: bool,
+        alias_or_index: String,
+    },
+    Loaded {
+        #[clap(long, short, default_value_t = 3100)]
+        port: u16,
+        alias_or_index: Option<String>,
+    },
+    Unload {
+        #[clap(long, short, default_value_t = 3100)]
+        port: u16,
+        alias_or_index: String,
+    },
+    Logs {
+        #[clap(long, short, default_value_t = 3100)]
+        port: u16,
+        #[clap(long, short, action)]
+        tail: bool,
+        #[clap(long, short, action)]
+        json: bool,
+        alias_or_index: String,
     },
 }
 

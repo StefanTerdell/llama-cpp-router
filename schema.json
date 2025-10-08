@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Config",
+  "type": "object",
+  "properties": {
+    "models": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ModelConfig"
+      }
+    }
+  },
+  "required": [
+    "models"
+  ],
+  "$defs": {
+    "AliasOrIndex": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
+        }
+      ]
+    },
+    "ExternalModelConfig": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "api-key": {
+          "type": "string"
+        },
+        "base-url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "base-url",
+        "name",
+        "api-key"
+      ]
+    },
+    "LlamaCppModelConfig": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "api-key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hf-repo": {
+          "type": "string"
+        },
+        "host": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "hf-repo",
+        "port",
+        "alias"
+      ]
+    },
+    "ModelConfig": {
+      "type": "object",
+      "properties": {
+        "loads": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/AliasOrIndex"
+          }
+        },
+        "unloads": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/AliasOrIndex"
+          }
+        }
+      },
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "config": {
+              "$ref": "#/$defs/LlamaCppModelConfig"
+            },
+            "type": {
+              "type": "string",
+              "const": "llama-cpp"
+            }
+          },
+          "required": [
+            "type",
+            "config"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "config": {
+              "$ref": "#/$defs/ExternalModelConfig"
+            },
+            "type": {
+              "type": "string",
+              "const": "external"
+            }
+          },
+          "required": [
+            "type",
+            "config"
+          ]
+        }
+      ]
+    }
+  }
+}
