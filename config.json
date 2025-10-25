@@ -3,6 +3,7 @@
   "models": [
     {
       "type": "llama-cpp",
+      "default": false,
       "config": {
         "alias": "chat",
         "hf-repo": "ReadyArt/Safeword-Casual-V1-R1-12B-GGUF:Q6_K",
@@ -13,9 +14,20 @@
     },
     {
       "type": "llama-cpp",
+      "default": true,
       "config": {
         "alias": "chat",
         "hf-repo": "TheDrummer/Gemma-3-R1-12B-v1-GGUF:Q6_K",
+        "port": 3101,
+        "ctx-size": 64000,
+        "gpu-layers": 99
+      }
+    },
+    {
+      "type": "llama-cpp",
+      "config": {
+        "alias": "chat",
+        "hf-repo": "unsloth/gemma-3-12b-it-GGUF:Q4_K_M",
         "port": 3101,
         "ctx-size": 64000,
         "gpu-layers": 99
@@ -46,6 +58,5 @@
         "gpu-layers": 99
       }
     }
-  ],
-  "port": 3100
+  ]
 }

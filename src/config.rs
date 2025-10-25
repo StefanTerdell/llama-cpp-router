@@ -1,170 +1,73 @@
-use anyhow::{Context, Result, bail};
+mod alias_or_index;
+mod llama_cpp;
+mod external;
+mod model;
+
+pub use alias_or_index::*;
+pub use llama_cpp::*;
+pub use model::*;
+pub use external::*;
+
+use anyhow::{Context, Result, anyhow, bail};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
-use std::{fs::canonicalize, path::Path};
-use url::Url;
+use utils_rs::option::as_bool::AsBool;
+use std::{collections::{HashMap, HashSet}, fs::canonicalize, path::Path};
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-pub struct LlamaCppModelConfig {
-    pub hf_repo: String,
-    pub port: u16,
-    pub alias: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub api_key: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub host: Option<String>,
-    #[serde(flatten)]
-    pub additional_properties: Map<String, Value>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-pub struct ExternalModelConfig {
-    pub base_url: Url,
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub alias: Option<String>,
-    pub api_key: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(tag = "type", content = "config", rename_all = "kebab-case")]
-pub enum ModelTypeConfig {
-    LlamaCpp(LlamaCppModelConfig),
-    External(ExternalModelConfig),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct ModelConfig {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub unloads: Option<Vec<AliasOrIndex>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub loads: Option<Vec<AliasOrIndex>>,
-    #[serde(flatten)]
-    pub config: ModelTypeConfig,
-}
-
-impl ModelConfig {
-    pub fn alias(&self) -> &str {
-        match &self.config {
-            ModelTypeConfig::LlamaCpp(x) => &x.alias,
-            ModelTypeConfig::External(x) => x.alias.as_deref().unwrap_or(&x.name),
-        }
-    }
-
-    pub fn name(&self) -> &str {
-        match &self.config {
-            ModelTypeConfig::LlamaCpp(x) => &x.alias,
-            ModelTypeConfig::External(x) => &x.name,
-        }
-    }
-
-    pub fn api_key(&self) -> Option<&str> {
-        match &self.config {
-            ModelTypeConfig::LlamaCpp(x) => x.api_key.as_deref(),
-            ModelTypeConfig::External(x) => Some(&x.api_key),
-        }
-    }
-
-    pub fn url(&self) -> Result<Url, url::ParseError> {
-        match &self.config {
-            ModelTypeConfig::LlamaCpp(x) => format!(
-                "http://{host}:{port}",
-                host = x.host.as_deref().unwrap_or("localhost"),
-                port = x.port
-            )
-            .parse(),
-            ModelTypeConfig::External(x) => Ok(x.base_url.clone()),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct Config {
+    #[serde(rename = "$schema")]
+    pub schema: Option<String>,
     pub models: Vec<ModelConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub providers: Option<HashMap<String, ExternalProviderConfig>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub load_defaults_on_launch : Option<bool>
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(untagged)]
-pub enum AliasOrIndex {
-    Alias(String),
-    Index(usize),
-}
-
-impl From<&AliasOrIndex> for AliasOrIndex {
-    fn from(value: &AliasOrIndex) -> Self {
-        value.clone()
-    }
-}
-
-impl AliasOrIndex {
-    pub fn as_alias(&self) -> Option<&str> {
-        match self {
-            AliasOrIndex::Alias(alias) => Some(alias),
-            AliasOrIndex::Index(_) => None,
-        }
-    }
-
-    #[allow(unused)]
-    pub fn as_index(&self) -> Option<usize> {
-        match self {
-            AliasOrIndex::Alias(_) => None,
-            AliasOrIndex::Index(index) => Some(*index),
-        }
-    }
-}
-
-impl From<&str> for AliasOrIndex {
-    fn from(str: &str) -> Self {
-        str.to_string().into()
-    }
-}
-
-impl From<&String> for AliasOrIndex {
-    fn from(str: &String) -> Self {
-        str.to_owned().into()
-    }
-}
-
-impl From<String> for AliasOrIndex {
-    fn from(value: String) -> Self {
-        match value.parse() {
-            Ok(index) => AliasOrIndex::Index(index),
-            Err(_) => AliasOrIndex::Alias(value),
-        }
-    }
-}
-
-impl From<usize> for AliasOrIndex {
-    fn from(index: usize) -> Self {
-        AliasOrIndex::Index(index)
-    }
-}
-
-// #[derive(Debug, thiserror::Error)]
-// pub enum ConfigError {
-//     #[error(transparent)]
-//     Io(#[from] std::io::Error),
-//     #[error(transparent)]
-//     Json(#[from] serde_json::Error),
-//     #[error("No model config found using {0:?}")]
-//     ModelNotFound(AliasOrIndex),
-//     #[error(
-//         "Can't determine which model config to get as there are more than one model configs using the alias or name '{0}'. Use an index instead."
-//     )]
-//     Indeterminable(String),
-// }
 
 impl Config {
     pub fn load(path: &Path) -> Result<Config> {
         let path = canonicalize(path)?;
         let file_content =
             std::fs::read_to_string(&path).context("Failed to read config file content")?;
-        let config = serde_json::from_str(&file_content)?;
+        let Config { schema, models, providers, load_defaults_on_launch }: Config = serde_json::from_str(&file_content)?;
 
-        Ok(config)
+        let mut defaults = HashSet::new();
+
+        Ok(Config {
+            schema,
+            load_defaults_on_launch,
+            models: models
+                .into_iter()
+                .map(|model_config| {
+                    if model_config.is_default.as_bool() && !defaults.insert(model_config.alias().to_string()) {
+                        bail!("Multiple models with alias '{}' marked as default", model_config.alias())
+                    }
+                    
+                    anyhow::Ok(ModelConfig {
+                        config: match model_config.config {
+                            ModelTypeConfig::External(ExternalConfig::ProviderNameAndModel(
+                                ExternalProviderNameAndModelConfig { provider, model },
+                            )) => {
+                                  ModelTypeConfig::External(ExternalConfig::ProviderAndModel(
+                                    ExternalProviderAndModelConfig {
+                                        provider: providers
+                                            .as_ref()
+                                            .and_then(|providers| providers.get(&provider).cloned())
+                                            .ok_or(anyhow!("External model config {model:?} references missing provider '{provider}'"))?,
+                                        model,
+                                    },
+                                ))          
+                            },
+                            other => other,
+                        },
+                        ..model_config
+                    })
+                })
+               .collect::<Result<Vec<_>, _>>()?,
+            providers
+        })
     }
 
     pub fn get_model_config(
@@ -185,22 +88,15 @@ impl Config {
 
         if model_configs.is_empty() {
             bail!("Model with alias or index {alias_or_index:#?} not found");
-            // return Err(ConfigError::ModelNotFound(alias_or_index));
         }
 
         let count = model_configs.len();
 
         if count != 1 {
             bail!(
-                "{count} models with the same alias {} exists. Use an index instead.",
+                "{count} models with the same alias '{}' exists. Use an index instead.",
                 alias_or_index.as_alias().expect("wtf")
             );
-            // return Err(ConfigError::Indeterminable(
-            //     alias_or_index
-            //         .as_alias()
-            //         .expect("what in the goddamn fuck")
-            //         .to_string(),
-            // ));
         }
 
         let (_, model_config) = model_configs.remove(0);

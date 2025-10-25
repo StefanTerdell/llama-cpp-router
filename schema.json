@@ -8,8 +8,18 @@
       "items": {
         "$ref": "#/$defs/ModelConfig"
       }
+    },
+    "providers": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": {
+        "$ref": "#/$defs/ExternalProviderConfig"
+      }
     }
   },
+  "additionalProperties": false,
   "required": [
     "models"
   ],
@@ -26,7 +36,17 @@
         }
       ]
     },
-    "ExternalModelConfig": {
+    "ExternalConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExternalProviderAndModelConfig"
+        },
+        {
+          "$ref": "#/$defs/ExternalProviderNameAndModelConfig"
+        }
+      ]
+    },
+    "ExternalProviderAndModelConfig": {
       "type": "object",
       "properties": {
         "alias": {
@@ -42,14 +62,54 @@
           "type": "string",
           "format": "uri"
         },
-        "name": {
+        "id": {
           "type": "string"
         }
       },
+      "additionalProperties": false,
       "required": [
         "base-url",
-        "name",
+        "api-key",
+        "id"
+      ]
+    },
+    "ExternalProviderConfig": {
+      "type": "object",
+      "properties": {
+        "api-key": {
+          "type": "string"
+        },
+        "base-url": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "base-url",
         "api-key"
+      ]
+    },
+    "ExternalProviderNameAndModelConfig": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "id"
       ]
     },
     "LlamaCppModelConfig": {
@@ -90,6 +150,12 @@
     "ModelConfig": {
       "type": "object",
       "properties": {
+        "default": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "loads": {
           "type": [
             "array",
@@ -130,7 +196,7 @@
           "type": "object",
           "properties": {
             "config": {
-              "$ref": "#/$defs/ExternalModelConfig"
+              "$ref": "#/$defs/ExternalConfig"
             },
             "type": {
               "type": "string",
@@ -142,7 +208,8 @@
             "config"
           ]
         }
-      ]
+      ],
+      "unevaluatedProperties": false
     }
   }
 }

@@ -1,4 +1,7 @@
-use std::path::PathBuf;
+use std::{
+    net::{IpAddr, Ipv4Addr},
+    path::PathBuf,
+};
 
 use clap::{Parser, Subcommand};
 
@@ -12,6 +15,8 @@ pub struct Cli {
 pub enum CliCommand {
     Schema,
     Serve {
+        #[clap(long, short, default_value_t = IpAddr::V4(Ipv4Addr::UNSPECIFIED))]
+        ip: IpAddr,
         #[clap(long, short, default_value = "./config.json")]
         config_path: PathBuf,
         #[clap(long, short, action)]

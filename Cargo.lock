@@ -863,7 +863,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "241eaef5fd12c88705a01fc1066c48c4b36e0dd4377dcdc7ec3942cea7a69956"
 
 [[package]]
-name = "llama-cpp-router"
+name = "llama-herder"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -871,6 +871,7 @@ dependencies = [
  "axum",
  "chrono",
  "clap",
+ "http",
  "reqwest",
  "reqwest-sse",
  "schemars",
@@ -880,6 +881,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "url",
+ "utils-rs",
 ]
 
 [[package]]
@@ -1744,6 +1746,14 @@ name = "utf8parse"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
+
+[[package]]
+name = "utils-rs"
+version = "0.3.0"
+source = "git+https://github.com/StefanTerdell/utils-rs/#5216993b2fc06c670540f2a5ff09917e0697774c"
+dependencies = [
+ "thiserror",
+]
 
 [[package]]
 name = "vcpkg"
