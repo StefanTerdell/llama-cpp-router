@@ -3,6 +3,18 @@
   "title": "Config",
   "type": "object",
   "properties": {
+    "$schema": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "load-defaults-on-launch": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
     "models": {
       "type": "array",
       "items": {

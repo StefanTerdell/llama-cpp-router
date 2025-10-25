@@ -1,5 +1,6 @@
 {
   "$schema": "./schema.json",
+  "load-defaults-on-launch": true,
   "models": [
     {
       "type": "llama-cpp",

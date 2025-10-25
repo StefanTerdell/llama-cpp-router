@@ -19,11 +19,16 @@ impl ApiState {
             let default_aliases = config
                 .models
                 .iter()
-                .filter(|x| x.is_default.as_bool())
-                .map(|x| x.alias());
+                .enumerate()
+                .filter(|(_, x)| x.is_default.as_bool());
 
-            for alias in default_aliases {
-                models.load(&config, alias).await?;
+            for (index, model_config) in default_aliases {
+                println!(
+                    "Loading default model for alias '{}' (config.models[{index}]: {})",
+                    model_config.alias(),
+                    serde_json::to_string(&model_config.config).unwrap()
+                );
+                models.load(&config, index).await?;
             }
         }
 
