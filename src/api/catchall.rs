@@ -5,7 +5,11 @@ use axum::{
     http::Response,
     routing::{MethodRouter, any},
 };
-use http::{HeaderMap, Method, Uri, Version, header::CONTENT_TYPE, request::Parts};
+use http::{
+    HeaderMap, Method, Uri, Version,
+    header::{CONTENT_LENGTH, CONTENT_TYPE, HOST},
+    request::Parts,
+};
 use reqwest::header::AUTHORIZATION;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -59,7 +63,7 @@ async fn route_request_by_json_model_field_or_model_header(
         Parts {
             method,
             uri,
-            headers,
+            mut headers,
             version,
             ..
         },
@@ -99,7 +103,18 @@ async fn route_request_by_json_model_field_or_model_header(
         json_body
     };
 
-    let body = reqwest::Body::wrap(serde_json::to_string(&json_body).unwrap());
+    let body =
+        serde_json::to_vec(&json_body).context("Failed to serialize json body into bytes")?;
+
+    headers.insert(
+        CONTENT_LENGTH,
+        body.len()
+            .to_string()
+            .parse()
+            .context("Failed to set content-length header value")?,
+    );
+
+    let body = reqwest::Body::from(body);
 
     route_request_parts_and_body_by_model_config(model_config, method, uri, headers, version, body)
         .await
@@ -139,7 +154,7 @@ async fn route_request_parts_and_body_by_model_config(
     model_config: ModelConfig,
     method: Method,
     uri: Uri,
-    headers: HeaderMap,
+    mut headers: HeaderMap,
     version: Version,
     body: reqwest::Body,
 ) -> ApiResult {
@@ -155,6 +170,8 @@ async fn route_request_parts_and_body_by_model_config(
 
     let mut request = reqwest::Request::new(method, url);
 
+    headers.remove(HOST);
+
     *request.headers_mut() = headers;
     *request.version_mut() = version;
     *request.body_mut() = Some(body);
@@ -162,7 +179,7 @@ async fn route_request_parts_and_body_by_model_config(
     if let Some(api_key) = model_config.api_key() {
         request.headers_mut().insert(
             AUTHORIZATION,
-            format!("Bearer {api_key}")
+            format!("Bearer {}", api_key.expose_ref())
                 .parse()
                 .context("Failed constructing bearer header value")?,
         );
@@ -174,9 +191,12 @@ async fn route_request_parts_and_body_by_model_config(
         .context("Error passing on request")?;
 
     let headers = take(response.headers_mut());
+    let extensions = take(response.extensions_mut());
+
     let mut response = Response::new(Body::from_stream(response.bytes_stream()));
 
     *response.headers_mut() = headers;
+    *response.extensions_mut() = extensions;
 
     Ok(response)
 }
