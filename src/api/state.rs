@@ -24,9 +24,9 @@ impl ApiState {
 
             for (index, model_config) in default_aliases {
                 println!(
-                    "Loading default model for alias '{}' (config.models[{index}]: {})",
+                    "Loading default model for alias '{}' (config.models[{index}]: {:?})",
                     model_config.alias(),
-                    serde_json::to_string(&model_config.config).unwrap()
+                    model_config.config
                 );
                 models.load(&config, index).await?;
             }

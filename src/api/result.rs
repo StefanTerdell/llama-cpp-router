@@ -17,6 +17,8 @@ pub enum ApiError {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
+        eprintln!("Responding with error: {self:#?}");
+
         (
             match &self {
                 ApiError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,

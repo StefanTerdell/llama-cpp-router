@@ -57,8 +57,8 @@ async fn main() -> Result<()> {
                             config::ModelTypeConfig::External(x) => {
                                 format!(
                                     "External ('{}' - {})",
-                                    x.unwrap().model.id,
-                                    x.unwrap().provider.base_url
+                                    x.model().id,
+                                    x.unwrap_provider().base_url
                                 )
                             }
                         },

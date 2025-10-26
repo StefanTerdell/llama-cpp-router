@@ -42,7 +42,10 @@ async fn list_v1_models(State(state): State<ApiState>) -> ApiResult<Json<V1Model
                 .url()
                 .map_err(|err| anyhow!("Error constructing Url: {err}"))?
                 .to_string(),
-            model_config.api_key().map(String::from),
+            model_config
+                .api_key()
+                .map(|k| k.expose_clone())
+                .unwrap_or_default(),
         );
 
         let provider_model_list = match provider_model_lists.get(&key) {
@@ -51,7 +54,7 @@ async fn list_v1_models(State(state): State<ApiState>) -> ApiResult<Json<V1Model
                 let mut request = reqwest::Client::new().get(url);
 
                 if let Some(key) = model_config.api_key() {
-                    request = request.bearer_auth(key)
+                    request = request.bearer_auth(key.expose_ref())
                 }
 
                 let models = request

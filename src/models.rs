@@ -145,7 +145,7 @@ impl Models {
                     .arg(port.to_string());
 
                 if let Some(api_key) = api_key {
-                    command.arg("--api-key").arg(api_key);
+                    command.arg("--api-key").arg(api_key.expose_ref());
                 }
 
                 if let Some(host) = host {

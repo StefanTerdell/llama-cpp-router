@@ -1,12 +1,13 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use url::Url;
+use utils_rs::secret::Secret;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct ExternalProviderConfig {
     pub base_url: Url,
-    pub api_key: String,
+    pub api_key: Secret<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -42,9 +43,16 @@ pub enum ExternalConfig {
 }
 
 impl ExternalConfig {
-    pub fn unwrap(&self) -> &ExternalProviderAndModelConfig {
+    pub fn model(&self) -> &ExternalModelConfig {
         match self {
-            ExternalConfig::ProviderAndModel(x) => x,
+            ExternalConfig::ProviderAndModel(x) => &x.model,
+            ExternalConfig::ProviderNameAndModel(x) => &x.model,
+        }
+    }
+
+    pub fn unwrap_provider(&self) -> &ExternalProviderConfig {
+        match self {
+            ExternalConfig::ProviderAndModel(x) => &x.provider,
             ExternalConfig::ProviderNameAndModel(x) => {
                 panic!("Expected resolved ProviderAndModel, found {x:#?}")
             }

@@ -23,4 +23,4 @@ thiserror = "2.0.17"
 tokio = { version = "1.47.1", features = ["full"] }
 tokio-stream = { version = "0.1.17", features = ["full"] }
 url = { version = "2.5.7", features = ["serde"] }
-utils-rs = { git = "https://github.com/StefanTerdell/utils-rs/", version = "0.3.0" }
+utils-rs = { git = "https://github.com/StefanTerdell/utils-rs/", version = "0.4.0" }

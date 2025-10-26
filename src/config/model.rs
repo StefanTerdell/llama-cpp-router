@@ -2,6 +2,7 @@ use anyhow::Result;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use url::Url;
+use utils_rs::secret::Secret;
 
 use crate::config::{
     alias_or_index::AliasOrIndex, external::ExternalConfig, llama_cpp::LlamaCppModelConfig,
@@ -31,24 +32,21 @@ impl ModelConfig {
     pub fn alias(&self) -> &str {
         match &self.config {
             ModelTypeConfig::LlamaCpp(x) => &x.alias,
-            ModelTypeConfig::External(x) => {
-                let x = &x.unwrap().model;
-                x.alias.as_deref().unwrap_or(&x.id)
-            }
+            ModelTypeConfig::External(x) => x.model().alias.as_deref().unwrap_or(&x.model().id),
         }
     }
 
     pub fn id(&self) -> &str {
         match &self.config {
             ModelTypeConfig::LlamaCpp(x) => &x.alias,
-            ModelTypeConfig::External(x) => &x.unwrap().model.id,
+            ModelTypeConfig::External(x) => &x.model().id,
         }
     }
 
-    pub fn api_key(&self) -> Option<&str> {
+    pub fn api_key(&self) -> Option<&Secret<String>> {
         match &self.config {
-            ModelTypeConfig::LlamaCpp(x) => x.api_key.as_deref(),
-            ModelTypeConfig::External(x) => Some(&x.unwrap().provider.api_key),
+            ModelTypeConfig::LlamaCpp(x) => x.api_key.as_ref(),
+            ModelTypeConfig::External(x) => Some(&x.unwrap_provider().api_key),
         }
     }
 
@@ -60,7 +58,7 @@ impl ModelConfig {
                 port = x.port
             )
             .parse(),
-            ModelTypeConfig::External(x) => Ok(x.unwrap().provider.base_url.clone()),
+            ModelTypeConfig::External(x) => Ok(x.unwrap_provider().base_url.clone()),
         }
     }
 }
