@@ -3,7 +3,7 @@ use std::{
     path::PathBuf,
 };
 
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 pub struct Cli {
@@ -11,22 +11,33 @@ pub struct Cli {
     command: CliCommand,
 }
 
+#[derive(Debug, Args)]
+pub struct ServeArgs {
+    #[clap(long, short, default_value_t = IpAddr::V4(Ipv4Addr::UNSPECIFIED))]
+    pub ip: IpAddr,
+    #[clap(long, short)]
+    pub config_path: Option<PathBuf>,
+    #[clap(long, short, default_value_t = 3100)]
+    pub port: u16,
+}
+
 #[derive(Debug, Subcommand)]
 pub enum CliCommand {
     Schema,
     Serve {
-        #[clap(long, short, default_value_t = IpAddr::V4(Ipv4Addr::UNSPECIFIED))]
-        ip: IpAddr,
-        #[clap(long, short, default_value = "./config.json")]
-        config_path: PathBuf,
+        #[clap(flatten)]
+        args: ServeArgs,
         #[clap(long, short, action)]
         detach: bool,
-        #[clap(long, short, default_value_t = 3100)]
-        port: u16,
+    },
+    Start(ServeArgs),
+    Stop {
+        #[clap(long, short)]
+        config_path: Option<PathBuf>,
     },
     Models {
-        #[clap(long, short, default_value = "./config.json")]
-        config_path: PathBuf,
+        #[clap(long, short)]
+        config_path: Option<PathBuf>,
         #[clap(subcommand)]
         command: Option<ModelCommand>,
     },
@@ -50,7 +61,6 @@ pub enum ModelCommand {
     Loaded {
         #[clap(long, short, default_value_t = 3100)]
         port: u16,
-        alias_or_index: Option<String>,
     },
     Unload {
         #[clap(long, short, default_value_t = 3100)]

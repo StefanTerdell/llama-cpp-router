@@ -7,7 +7,11 @@ mod state;
 use anyhow::Result;
 use axum::Router;
 use std::{net::SocketAddr, path::PathBuf};
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, runtime::Runtime};
+
+pub fn serve_sync(address: &SocketAddr, config_path: PathBuf) -> Result<()> {
+    Runtime::new()?.block_on(async { serve(address, config_path).await })
+}
 
 pub async fn serve(address: &SocketAddr, config_path: PathBuf) -> Result<()> {
     let state = state::ApiState::init(config_path).await?;

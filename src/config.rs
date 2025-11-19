@@ -2,11 +2,13 @@ mod alias_or_index;
 mod llama_cpp;
 mod external;
 mod model;
+mod detach;
 
 pub use alias_or_index::*;
 pub use llama_cpp::*;
 pub use model::*;
 pub use external::*;
+pub use detach::*;
 
 use anyhow::{Context, Result, anyhow, bail};
 use schemars::JsonSchema;
@@ -23,7 +25,9 @@ pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub providers: Option<HashMap<String, ExternalProviderConfig>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub load_defaults_on_launch : Option<bool>
+    pub load_defaults_on_launch : Option<bool>,
+    #[serde(default)]
+    pub detach: DetachConfig
 }
 
 impl Config {
@@ -31,13 +35,14 @@ impl Config {
         let path = canonicalize(path)?;
         let file_content =
             std::fs::read_to_string(&path).context("Failed to read config file content")?;
-        let Config { schema, models, providers, load_defaults_on_launch }: Config = serde_json::from_str(&file_content)?;
+        let Config { schema, models, providers, load_defaults_on_launch, detach }: Config = serde_json::from_str(&file_content)?;
 
         let mut defaults = HashSet::new();
 
         Ok(Config {
             schema,
             load_defaults_on_launch,
+            detach,
             models: models
                 .into_iter()
                 .map(|model_config| {
